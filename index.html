@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #F4EEEE;
+    color: #FFFFFF;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .widget {
+    padding: 14px;
+    border-radius: 12px;
+    background: #F4EEEE;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .book {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+  }
+
+  .book img {
+    width: 70px;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  .info {
+    flex: 1;
+  }
+
+  .title a {
+    color: #FFFFFF;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .author {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-bottom: 4px;
+  }
+
+  .progress {
+    font-size: 0.75rem;
+    opacity: 0.9;
+  }
+
+  .progress-bar {
+    margin-top: 4px;
+    height: 6px;
+    width: 100%;
+    background: rgba(255,255,255,0.3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #FFFFFF;
+    width: 0%;
+  }
+
+  a {
+    color: #FFFFFF;
+    text-decoration: none;
+  }
+</style>
+</head>
+
+<body>
+  <div class="widget">
+    <div id="books">Loading…</div>
+  </div>
+
+<script>
+  const rssUrl =
+    "https://www.goodreads.com/review/list_rss/915140?shelf=currently-reading";
+  const proxy =
+    "https://api.allorigins.win/get?url=" + encodeURIComponent(rssUrl);
+
+  fetch(proxy)
+    .then(res => res.json())
+    .then(data => {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(data.contents, "text/xml");
+      const items = xml.querySelectorAll("item");
+      const container = document.getElementById("books");
+      container.innerHTML = "";
+
+      items.forEach(item => {
+        const title = item.querySelector("title")?.textContent || "";
+        const link = item.querySelector("link")?.textContent || "";
+        const author = item.querySelector("author_name")?.textContent || "";
+        const cover = item.querySelector("book_large_image_url")?.textContent || "";
+        const progress =
+          item.querySelector("user_reading_progress")?.textContent || "";
+
+        const el = document.createElement("div");
+        el.className = "book";
+
+        el.innerHTML = `
+          <img src="${cover}" alt="${title}">
+          <div class="info">
+            <div class="title">
+              <a href="${link}" target="_blank" rel="noopener">${title}</a>
+            </div>
+            <div class="author">by ${author}</div>
+            ${
+              progress
+                ? `
+                  <div class="progress">${progress}% read</div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width:${progress}%"></div>
+                  </div>
+                `
+                : ""
+            }
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    })
+    .catch(() => {
+      document.getElementById("books").innerText =
+        "Unable to load books right now.";
+    });
+</script>
+</body>
+</html>
